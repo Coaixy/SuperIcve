@@ -7,6 +7,9 @@ import org.java_websocket.server.WebSocketServer
 import java.net.InetSocketAddress
 import kotlin.Exception
 
+/**
+ * WebSocket服务端
+ */
 class WebSocket(port: Int) : WebSocketServer(InetSocketAddress(port)) {
     var cookie = ""
     override fun onOpen(conn: WebSocket?, handshake: ClientHandshake?) {

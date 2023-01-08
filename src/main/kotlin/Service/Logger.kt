@@ -1,5 +1,8 @@
 package Service
 
+/**
+ * 输出类
+ */
 object Logger {
     fun info(message:String){
         println("【信息】$message")
