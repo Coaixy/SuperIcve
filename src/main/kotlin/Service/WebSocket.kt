@@ -18,7 +18,9 @@ class WebSocket(port: Int) : WebSocketServer(InetSocketAddress(port)) {
 
     override fun onMessage(conn: WebSocket?, message: String?) {
         val msg = message.toString()
-        
+        if (msg != ""){
+
+        }
     }
 
     override fun onError(conn: WebSocket?, ex: Exception?) {

@@ -16,6 +16,9 @@ dependencies {
     testImplementation(kotlin("test"))
     // https://mvnrepository.com/artifact/org.java-websocket/Java-WebSocket
     implementation("org.java-websocket:Java-WebSocket:1.5.3")
+    // https://mvnrepository.com/artifact/org.sharegov/mjson
+    implementation("org.sharegov:mjson:1.4.1")
+
 
 }
 
