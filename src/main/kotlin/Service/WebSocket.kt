@@ -1,13 +1,14 @@
 package Service
 
+import mjson.Json
 import org.java_websocket.WebSocket
 import org.java_websocket.handshake.ClientHandshake
 import org.java_websocket.server.WebSocketServer
-import java.lang.Exception
 import java.net.InetSocketAddress
+import kotlin.Exception
 
 class WebSocket(port: Int) : WebSocketServer(InetSocketAddress(port)) {
-
+    var cookie = ""
     override fun onOpen(conn: WebSocket?, handshake: ClientHandshake?) {
         Logger.info("连接建立")
     }
@@ -19,7 +20,16 @@ class WebSocket(port: Int) : WebSocketServer(InetSocketAddress(port)) {
     override fun onMessage(conn: WebSocket?, message: String?) {
         val msg = message.toString()
         if (msg != ""){
-
+            try {
+                val jsonData = Json.read(msg)
+                when(jsonData.at("type").asString()){
+                    "cookie" -> {
+                        this.cookie = jsonData.at("data").asString()
+                    }
+                }
+            }catch (e:Exception){
+                e.printStackTrace()
+            }
         }
     }
 
