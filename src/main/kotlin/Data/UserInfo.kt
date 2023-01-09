@@ -5,5 +5,10 @@ package Data
  */
 object UserInfo {
     var name = ""
+    var number = ""
+    var id = ""
+    var homeworkNumber = ""
+    var courseNumber = ""
+    var examNumber = ""
 
 }
