@@ -11,7 +11,6 @@ import kotlin.Exception
  * WebSocket服务端
  */
 class WebSocket(port: Int) : WebSocketServer(InetSocketAddress(port)) {
-    var cookie = ""
     override fun onOpen(conn: WebSocket?, handshake: ClientHandshake?) {
         Logger.info("连接建立")
     }
@@ -27,7 +26,7 @@ class WebSocket(port: Int) : WebSocketServer(InetSocketAddress(port)) {
                 val jsonData = Json.read(msg)
                 when(jsonData.at("type").asString()){
                     "cookie" -> {
-                        this.cookie = jsonData.at("data").asString()
+                        Requests.cookie = jsonData.at("data").asString()
                     }
                 }
             }catch (e:Exception){

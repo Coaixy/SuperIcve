@@ -17,7 +17,7 @@ object Requests {
     private fun getCookieFilePath():String{
         return File("").absolutePath+"\\cookie.txt"
     }
-    fun init(cookie:String){
+    fun init() {
         this.cookie = File(getCookieFilePath()).readText()
     }
     fun setBody(key:String,value:String,last:Boolean=false){
