@@ -17,8 +17,10 @@ object Requests {
     private fun getCookieFilePath():String{
         return File("").absolutePath+"\\cookie.txt"
     }
-    fun init() {
-        this.cookie = File(getCookieFilePath()).readText()
+    fun init():Boolean {
+        return if (!File(getCookieFilePath()).exists()){File(getCookieFilePath()).createNewFile();false
+        } else{ this.cookie = File(getCookieFilePath()).readText();true
+        }
     }
     fun setBody(key:String,value:String,last:Boolean=false){
         body = if (last){
@@ -44,6 +46,7 @@ object Requests {
                 .build()
             val response = client.send(request,HttpResponse.BodyHandlers.ofString())
             response.body().toString()
+
         }else{
             ""
         }

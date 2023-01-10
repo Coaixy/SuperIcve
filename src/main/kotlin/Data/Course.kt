@@ -7,6 +7,7 @@ import mjson.Json
  * 存储课程信息
  */
 object Course {
+    var meta = ""
     var name:MutableList<String> = mutableListOf()
     var openId:MutableList<String> = mutableListOf()
     var openClassId:MutableList<String> = mutableListOf()
@@ -15,7 +16,8 @@ object Course {
     fun init(){
         Requests.setUrl(Apis.learningCourseList)
         Requests.clearBody()
-        val data = Json.read(Requests.post())
+        this.meta = Requests.post()
+        val data = Json.read(meta)
         val courseList = data.at("courseList").asJsonList()
         for (i in courseList){
             openId.add(i.at("courseOpenId").asString())
