@@ -15,6 +15,9 @@ object Course {
     var process:MutableList<String> = mutableListOf()
     var selectedOpenid = ""
     var selectedOpenClassId = ""
+    var unfinishedList = mutableListOf<String>()
+    var cellIdMap = mutableMapOf<String,String>()
+    var logIdMap = mutableMapOf<String,String>()
     fun init(){
         Requests.setUrl(Apis.learningCourseList)
         Requests.clearBody()
@@ -30,28 +33,55 @@ object Course {
     }
 
     fun setId(index: Int){
-        setOpenClassId(index)
+        setOpenId(index)
         setOpenClassId(index)
     }
-    fun setOpenId(index:Int){
+    private fun setOpenId(index:Int){
         this.selectedOpenid = openId[index]
     }
-    fun setOpenClassId(index: Int){
+    private fun setOpenClassId(index: Int){
         this.selectedOpenClassId = openClassId[index]
     }
 
+    fun initUnfinishedList() {
+        this.unfinishedList.clear()
+        if (isSelectedId()){
+            val moduleList = this.getProcessList()
+            if (moduleList[0] != "error"){
+                for (moduleStrData in moduleList){
+                    // moduleElement module的源数据
+                    val moduleMapData = this.parseModuleString(moduleStrData)
+                    if (moduleMapData["percent"]!!.toInt() < 100){ //是否未完成
+                        val moduleId = moduleMapData["id"]
+                        val topicList = moduleId?.let { this.getTopicList(it) }
+                        if (topicList!![0] != "error"){
+                            for (topicStrData in topicList){
+                                val topicMapData = this.parseTopicString(topicStrData)
+                                val topicId = topicMapData["id"]
+                                val cellList = topicId?.let { this.getCellList(it) }
+                                val isChild = cellList!![0]
+                                if (isChild != "error"){
+
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
     /**
      * 判断是否已选择科目
      */
-    fun isSelectedId():Boolean{
+    private fun isSelectedId():Boolean{
         return selectedOpenid != "" && selectedOpenClassId != ""
     }
     /**
      * 获取Module List
-     * 第一个元素是moduleId 剩下的是module的源数据 (未进行解析的字符串)
+     * module的源数据 (未进行解析的字符串)
      * 如果第一个元素是error说明出现问题
      */
-    fun getProcessList(): MutableList<String> {
+    private fun getProcessList(): MutableList<String> {
         val result = mutableListOf<String>()
         return if (isSelectedId()){
             Requests.setUrl(Apis.processList)
@@ -60,9 +90,7 @@ object Course {
             Requests.setBody("openClassId",this.selectedOpenClassId,true)
             val meta =  Requests.post()
             val data = Json.read(meta).at("progress")
-            val moduleId = data.at("moduleId").asString()
             val moduleList = data.asJsonList()
-            result.add(moduleId)
             for (i in moduleList){
                 result.add(i.asString())
             }
@@ -77,7 +105,7 @@ object Course {
      * 解析module信息
      * 返回一个Map 拥有 id name percent
      */
-    fun parseModuleString(data:String):MutableMap<String,String>{
+    private fun parseModuleString(data:String):MutableMap<String,String>{
         val result = mutableMapOf<String,String>()
         val jsonData  = Json.read(data)
         result["id"] = jsonData.at("id").asString()
@@ -120,5 +148,34 @@ object Course {
         result["id"] = jsonData.at("id").asString()
         result["name"] = jsonData.at("name").asString()
         return result
+    }
+    /**
+     * 获取Cells
+     * 如果List的第一个值是true 则拥有子节点  为false则不存在子节点
+     * 处理代码一并放在getUnfinished里
+     */
+    fun getCellList(topicId:String):MutableList<String>{
+        val result = mutableListOf<String>()
+        return if(isSelectedId()){
+            Requests.setUrl(Apis.cellByTopicId)
+            Requests.clearBody()
+            Requests.setBody("courseOpenId",this.selectedOpenid)
+            Requests.setBody("openClassId",this.selectedOpenClassId)
+            Requests.setBody("topicId",topicId,true)
+            val data = Requests.post()
+            if (data.contains("子节点")){
+                result.add("true")
+            }else{
+                result.add("false")
+            }
+            val jsonList = Json.read(data).at("cellList").asJsonList()
+            for (i in jsonList){
+                result.add(i.asString())
+            }
+            result
+        }else{
+            result.add("error")
+            result
+        }
     }
 }
