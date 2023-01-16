@@ -1,6 +1,5 @@
 package Data
 
-import Service.Logger
 import Service.Requests
 import mjson.Json
 
@@ -8,16 +7,16 @@ import mjson.Json
  * 存储课程信息
  */
 object Course {
-    var meta = ""
-    var name:MutableList<String> = mutableListOf()
-    var openId:MutableList<String> = mutableListOf()
-    var openClassId:MutableList<String> = mutableListOf()
-    var process:MutableList<String> = mutableListOf()
-    var selectedOpenid = ""
-    var selectedOpenClassId = ""
-    var unfinishedList = mutableListOf<String>()
-    var cellIdMap = mutableMapOf<String,String>()
-    var logIdMap = mutableMapOf<String,String>()
+    private var meta = ""
+    private var name:MutableList<String> = mutableListOf()
+    private var openId:MutableList<String> = mutableListOf()
+    private var openClassId:MutableList<String> = mutableListOf()
+    private var process:MutableList<String> = mutableListOf()
+    private var selectedOpenid = ""
+    private var selectedOpenClassId = ""
+    var unfinishedList = mutableMapOf<String,MutableList<String>>()
+    var cellInfoList  = mutableListOf<MutableMap<String,String>>()
+    var cellModuleMap = mutableMapOf<String,String>()
     fun init(){
         Requests.setUrl(Apis.learningCourseList)
         Requests.clearBody()
@@ -43,6 +42,11 @@ object Course {
         this.selectedOpenClassId = openClassId[index]
     }
 
+
+    /**
+     * 获取未完成的项目并存储到
+     * unfinishedList cellInfoList cellModuleMap 三个变量中
+     */
     fun initUnfinishedList() {
         this.unfinishedList.clear()
         if (isSelectedId()){
@@ -53,6 +57,7 @@ object Course {
                     val moduleMapData = this.parseModuleString(moduleStrData)
                     if (moduleMapData["percent"]!!.toInt() < 100){ //是否未完成
                         val moduleId = moduleMapData["id"]
+                        unfinishedList[moduleId.toString()] = mutableListOf()
                         val topicList = moduleId?.let { this.getTopicList(it) }
                         if (topicList!![0] != "error"){
                             for (topicStrData in topicList){
@@ -74,17 +79,17 @@ object Course {
                                                     val nodeList = Json.read(cell).at("childNodeList").asJsonList()
                                                     for (node in nodeList){
                                                         if (node.at("stuCellFourPercent").asString().toInt() < 100){
-                                                            unfinishedList.add(node.at("Id").asString())
+                                                            unfinishedList[moduleId]?.add(node.at("Id").asString() )
                                                         }
                                                     }
                                                 }else{
-                                                    unfinishedList.add(Json.read(cell).at("Id").asString())
+                                                    unfinishedList[moduleId]?.add(Json.read(cell).at("Id").asString())
                                                 }
                                             }
                                         }
                                     }else{
                                         for (cell in cellList){
-                                            unfinishedList.add(Json.read(cell).at("Id").asString())
+                                            unfinishedList[moduleId]?.add(Json.read(cell).at("Id").asString())
                                         }
                                     }
                                 }
@@ -94,7 +99,14 @@ object Course {
                 }
             }
         }
-        //Id获取完了该获取CellId 和 LogId
+        //topicId获取完了该获取CellId 和 LogId 和 Token
+        for ((key,value) in unfinishedList){
+            for (topicId in value){
+                val cellInfo = this.getCellInfo(key,topicId)
+                cellInfoList.add(cellInfo)
+                cellModuleMap[cellInfo["cellId"].toString()] = key
+            }
+        }
     }
     /**
      * 判断是否已选择科目
@@ -145,11 +157,11 @@ object Course {
      * 第一个元素为code 剩下的是topic的源数据(未进行Json解析的字符串)
      * 如果第一个元素是error说明出现问题
      */
-    fun getTopicList(moduleId:String):MutableList<String>{
+    private fun getTopicList(moduleId:String):MutableList<String>{
         val result = mutableListOf<String>()
         return if (isSelectedId()){
             Requests.setUrl(Apis.topicByModuleId)
-            Requests.clearBody();
+            Requests.clearBody()
             Requests.setBody("courseOpenId",this.selectedOpenid)
             Requests.setBody("moduleId",moduleId,true)
             val data = Json.read(Requests.post())
@@ -168,7 +180,7 @@ object Course {
      * 获取的ID仍可以是topic  考虑到子节点的存在
      * 返回一个Map 拥有id name
      */
-    fun parseTopicString(data:String):MutableMap<String,String>{
+    private fun parseTopicString(data:String):MutableMap<String,String>{
         val result = mutableMapOf<String,String>()
         val jsonData = Json.read(data)
         result["id"] = jsonData.at("id").asString()
@@ -180,7 +192,7 @@ object Course {
      * 如果List的第一个值是true 则拥有子节点  为false则不存在子节点
      * 处理代码一并放在getUnfinished里
      */
-    fun getCellList(topicId:String):MutableList<String>{
+    private fun getCellList(topicId:String):MutableList<String>{
         val result = mutableListOf<String>()
         return if(isSelectedId()){
             Requests.setUrl(Apis.cellByTopicId)
@@ -203,5 +215,44 @@ object Course {
             result.add("error")
             result
         }
+    }
+    /**
+     * 获取CellInfo
+     * status 对应的为校验参数
+     */
+    private fun getCellInfo(moduleId:String,topicId:String):MutableMap<String,String>{
+        val result = mutableMapOf<String,String>()
+        if (isSelectedId()){
+            result["status"] = "true"
+            Requests.setUrl(Apis.viewDirectory)
+            Requests.clearBody()
+            Requests.setBody("courseOpenId",this.selectedOpenid)
+            Requests.setBody("openClassId",this.selectedOpenClassId)
+            Requests.setBody("cellId",topicId)
+            Requests.setBody("moduleId",moduleId,true)
+            val data = Requests.post()
+            val jsonData = Json.read(data)
+            fun rSet(property:String){
+                result[property] = jsonData.at(property).asString()
+            }
+            try {
+                rSet("audioVideoLong")
+                rSet("categoryName")
+                rSet("cellId") // 提交数据需要
+                rSet("cellLogId") // 提交数据需要
+                rSet("cellName")
+                rSet("cellPercent")
+                rSet("stuCellPicCount")
+                rSet("stuCellViewTime")
+                rSet("stuStudyNewlyPicCount")
+                rSet("stuStudyNewlyTime")
+                rSet("guIdToken") // 提交数据需要
+            }catch (_:Exception){
+                //错误处理
+            }
+        }else{
+            result["status"] = "false"
+        }
+        return result
     }
 }
