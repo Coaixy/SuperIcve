@@ -61,7 +61,32 @@ object Course {
                                 val cellList = topicId?.let { this.getCellList(it) }
                                 val isChild = cellList!![0]
                                 if (isChild != "error"){
-
+                                    /**
+                                     * 这里想写一个找出所有字节点的 但是不会写
+                                     * 等一个大佬帮我写
+                                     * 我只写了一个子节点的判断
+                                     */
+                                    if (isChild == "true"){ //存在子节点
+                                        for ((index, cell) in cellList.withIndex()){
+                                            if (index != 0){//第一个数据是Flag数据
+                                                //判断是否为节点数据
+                                                if (cell.contains("子节点") || cell.contains("childNodeList")){
+                                                    val nodeList = Json.read(cell).at("childNodeList").asJsonList()
+                                                    for (node in nodeList){
+                                                        if (node.at("stuCellFourPercent").asString().toInt() < 100){
+                                                            unfinishedList.add(node.at("Id").asString())
+                                                        }
+                                                    }
+                                                }else{
+                                                    unfinishedList.add(Json.read(cell).at("Id").asString())
+                                                }
+                                            }
+                                        }
+                                    }else{
+                                        for (cell in cellList){
+                                            unfinishedList.add(Json.read(cell).at("Id").asString())
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -69,6 +94,7 @@ object Course {
                 }
             }
         }
+        //Id获取完了该获取CellId 和 LogId
     }
     /**
      * 判断是否已选择科目
@@ -163,7 +189,7 @@ object Course {
             Requests.setBody("openClassId",this.selectedOpenClassId)
             Requests.setBody("topicId",topicId,true)
             val data = Requests.post()
-            if (data.contains("子节点")){
+            if (data.contains("子节点") || data.contains("childNodeList")){
                 result.add("true")
             }else{
                 result.add("false")
