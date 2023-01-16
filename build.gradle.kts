@@ -18,6 +18,9 @@ dependencies {
     implementation("org.java-websocket:Java-WebSocket:1.5.3")
     // https://mvnrepository.com/artifact/org.sharegov/mjson
     implementation("org.sharegov:mjson:1.4.1")
+    // https://mvnrepository.com/artifact/org.slf4j/slf4j-api
+    implementation("org.slf4j:slf4j-simple:2.0.5")
+
 
 
 }

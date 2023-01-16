@@ -14,12 +14,17 @@ object Requests {
     private const val userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36 Edg/108.0.1462.76"
     private var body = ""
     private var url = ""
-    private fun getCookieFilePath():String{
+    fun getCookieFilePath():String{
         return File("").absolutePath+"\\cookie.txt"
     }
     fun init():Boolean {
-        return if (!File(getCookieFilePath()).exists()){File(getCookieFilePath()).createNewFile();false
-        } else{ this.cookie = File(getCookieFilePath()).readText();true
+        return if (!File(getCookieFilePath()).exists())
+        {
+            File(getCookieFilePath()).createNewFile()
+            false
+        } else{
+            this.cookie = File(getCookieFilePath()).readText()
+            true
         }
     }
     fun setBody(key:String,value:String,last:Boolean=false){

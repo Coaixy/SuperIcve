@@ -4,6 +4,7 @@ import mjson.Json
 import org.java_websocket.WebSocket
 import org.java_websocket.handshake.ClientHandshake
 import org.java_websocket.server.WebSocketServer
+import java.io.File
 import java.net.InetSocketAddress
 import kotlin.Exception
 
@@ -22,15 +23,23 @@ class WebSocket(port: Int) : WebSocketServer(InetSocketAddress(port)) {
     override fun onMessage(conn: WebSocket?, message: String?) {
         val msg = message.toString()
         if (msg != ""){
+            Logger.info("【WebSocket】【接收】$msg")
             try {
+                /**
+                 * type -> 类别 data -> 数据
+                 */
                 val jsonData = Json.read(msg)
                 when(jsonData.at("type").asString()){
                     "cookie" -> {
                         Requests.cookie = jsonData.at("data").asString()
+                        if (Requests.cookie != ""){
+                            val file = File(Requests.getCookieFilePath())
+                            file.writeText(Requests.cookie) //保存Cookie
+                        }
                     }
                 }
-            }catch (e:Exception){
-                e.printStackTrace()
+            }catch (_:Exception){
+
             }
         }
     }

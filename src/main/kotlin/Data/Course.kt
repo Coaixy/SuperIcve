@@ -2,9 +2,12 @@ package Data
 
 import Service.Requests
 import mjson.Json
+import kotlin.math.log
 
 /**
  * 存储课程信息
+ * 课程的相关处理
+ * 包含了发送数据包
  */
 object Course {
     private var meta = ""
@@ -254,5 +257,33 @@ object Course {
             result["status"] = "false"
         }
         return result
+    }
+
+    /**
+     * 发送学习数据包，核心部分
+     * 注意：每次学习的时候都要先发送一个数据包
+     */
+    fun learn(time:String,num:String,token:String,cellId:String,logId:String){
+        if (isSelectedId()){
+            Requests.setUrl(Apis.stuProcessCellLog)
+            Requests.clearBody()
+            Requests.setBody("courseOpenId",this.selectedOpenid)
+            Requests.setBody("openClassId",this.selectedOpenClassId)
+            Requests.setBody("cellId",cellId)
+            Requests.setBody("cellLogId",logId)
+            Requests.setBody("studyNewlyTime",time)
+            Requests.setBody("studyNewlyPicNum",num)
+            Requests.setBody("token",token,true)
+            val jsonData = Json.read(Requests.post())
+        }
+    }
+
+    /**
+     * 这个函数用于选择当前学习课程
+     * 在Python版本中这个函数以失败告终，若在Kotlin中仍然失败的话
+     * 那我也没办法了，等待大佬补充
+     */
+    fun choose(){
+
     }
 }

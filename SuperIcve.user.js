@@ -32,6 +32,5 @@ ws.onopen = function (event){
 ws.onmessage = function (event){
     let data = event.data
     let jsonData = JSON.parse(data)
-    
 
 }

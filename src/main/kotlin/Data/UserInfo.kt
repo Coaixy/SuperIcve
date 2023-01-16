@@ -1,5 +1,6 @@
 package Data
 
+import Service.Logger
 import Service.Requests
 import mjson.Json
 
@@ -17,5 +18,9 @@ object UserInfo {
         val data = Json.read(meta)
         this.name = data.at("disPlayName").asString()
         this.number = data.at("stuNo").asString()
+    }
+
+    override fun toString(): String {
+        return "姓名:${this.name} 学号:${this.number}"
     }
 }
